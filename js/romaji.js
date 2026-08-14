@@ -56,6 +56,14 @@
     return String(s).replace(/[\u30A1-\u30F6ー]/g, (ch) => HIRA_FROM_KATA[ch] || ch);
   }
 
+  function cleanTypingKana(s) {
+    return toHiragana(s)
+      .replace(/[、。！？!?,.・…「」『』（）()：:；;]/g, "")
+      .replace(/　/g, " ")
+      .replace(/ {2,}/g, " ")
+      .replace(/^ +| +$/g, "");
+  }
+
   function nextMora(kana) {
     if (!kana) return null;
     for (const m of MORA_ORDER) {
@@ -81,6 +89,11 @@
     const out = [];
     if (!kana) return out;
     const head = kana[0];
+
+    if (head === " " || head === "　") {
+      out.push({ roman: " ", consume: 1 });
+      return out;
+    }
 
     if (head === "っ") {
       const rest = kana.slice(1);
@@ -125,6 +138,11 @@
     let rest = kana;
     let s = "";
     while (rest) {
+      if (rest[0] === " " || rest[0] === "　") {
+        s += " ";
+        rest = rest.slice(1);
+        continue;
+      }
       if (rest[0] === "っ") {
         const nxt = nextMora(rest.slice(1));
         if (nxt) {
@@ -138,7 +156,7 @@
       if (rest[0] === "ん") {
         const nxt = nextMora(rest.slice(1));
         const first = nxt ? (romajis(nxt.text)[0] || "x")[0] : "";
-        s += !nxt || "aiueoy".includes(first) || nxt.text === "ん" ? "nn" : "n";
+        s += !nxt ? "n" : ("aiueoy".includes(first) || nxt.text === "ん" ? "nn" : "n");
         rest = rest.slice(1);
         continue;
       }
@@ -152,7 +170,7 @@
   class RomajiEngine {
     constructor(kana) {
       this.source = String(kana);
-      this.kana = toHiragana(kana);
+      this.kana = cleanTypingKana(kana);
       this.pos = 0;
       this.buf = "";
       this.typedRoman = "";
@@ -300,6 +318,7 @@
     nextMora,
     tokenizeMoras,
     toHiragana,
+    cleanTypingKana,
     MORA_ROMAJI,
   };
 })(window);

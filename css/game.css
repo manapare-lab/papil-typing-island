@@ -192,7 +192,89 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .stage-node:not(.locked):hover { transform: translateY(-2px); }
 
 /* PLAY / TUTORIAL shared */
-#play, #tutorial, #zukan, #free, #result, #settings {
+.display-line {
+  font-size: clamp(18px, 2.6vw, 28px);
+  font-weight: 800;
+  color: #efe6ff;
+  margin-bottom: 4px;
+  line-height: 1.45;
+  max-width: 920px;
+}
+.display-line:empty { display: none; }
+.meaning-line {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #c8b6f0;
+}
+.meaning-line:empty { display: none; }
+.prompt-board.long .kana-line { font-size: clamp(16px, 2.4vw, 28px); }
+.prompt-board.long .display-line { font-size: clamp(15px, 2.1vw, 22px); }
+.prompt-board.long .roma-line { font-size: clamp(14px, 2vw, 20px); }
+
+.lesson-pick {
+  max-width: 880px;
+  width: min(880px, 94vw);
+  margin: 8px auto 16px;
+  display: flex; flex-direction: column; gap: 14px;
+  overflow: auto;
+}
+.pick-block {
+  background: var(--panel);
+  border: 2px solid var(--stroke);
+  border-radius: 20px;
+  padding: 12px 14px;
+}
+.pick-label { font-size: 13px; font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+.pick-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 0; border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 800; font-size: 16px;
+  color: var(--ink);
+  background: rgba(255,255,255,.1);
+}
+.chip:hover { background: rgba(255,255,255,.18); }
+.chip.on {
+  color: #2a1040;
+  background: linear-gradient(#fff7c2, #ffd36a);
+  box-shadow: 0 4px 0 #c98920;
+}
+.chip.locked { opacity: .45; filter: grayscale(.4); }
+.chip .sub { display: block; font-size: 11px; font-weight: 700; opacity: .8; }
+.lesson-summary {
+  background: var(--panel);
+  border: 2px solid var(--stroke);
+  border-radius: 20px;
+  padding: 16px 18px;
+  min-height: 88px;
+}
+.lesson-summary h3 { margin: 0 0 6px; font-size: 22px; }
+.lesson-summary p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.lesson-actions { display: flex; justify-content: center; }
+
+.score-hero {
+  font-size: 42px; font-weight: 800; color: var(--gold);
+  letter-spacing: .04em;
+  text-shadow: 0 3px 0 #c98920;
+  margin: 2px 0 6px;
+}
+.score-hero small {
+  display: block; font-size: 16px; letter-spacing: 0;
+  text-shadow: none; color: #9dffc2; margin-top: 2px;
+}
+.score-break {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  text-align: left;
+  font-size: 14px; font-weight: 800; color: var(--muted);
+  margin: 0 auto 12px; max-width: 360px;
+}
+.score-break b { color: var(--ink); float: right; }
+.score-break .plus b { color: #9dffc2; }
+.score-break .minus b { color: #ff9aa8; }
+
+#play, #tutorial, #zukan, #free, #lessons, #hajimete, #result, #settings {
   padding: 12px 20px 10px;
 }
 .play-top {
@@ -552,4 +634,42 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .play-body { grid-template-columns: 1fr; }
   .coach { flex-direction: row; }
   .coach img.papil { width: 96px; height: 96px; }
+}
+
+@media (max-width: 600px) {
+  #play, #tutorial, #zukan, #free, #lessons, #hajimete, #result, #settings {
+    padding: 8px 10px;
+  }
+  .play-top { flex-wrap: wrap; gap: 6px 8px; }
+  .play-top h2 {
+    flex: 1 1 calc(100% - 58px);
+    min-width: 0;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+  .play-top .stats {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .play-top .stat { padding: 5px 7px; }
+  .coach { padding: 8px; }
+  .coach img.papil { width: 74px; height: 74px; }
+  .bubble { min-height: 0; padding: 8px 10px; font-size: 13px; }
+  .prompt-board { min-height: 136px; padding-inline: 10px; }
+  .kb-stage { padding-inline: 6px; }
+  .kb { gap: 4px; }
+  .kb-row { gap: 3px; }
+  .key {
+    width: 23px;
+    height: 34px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+  .key.space { width: 150px; }
+  .key .bump { bottom: 4px; width: 7px; }
+  .hands { height: 120px; }
+  .hands-svg { height: 120px; }
 }

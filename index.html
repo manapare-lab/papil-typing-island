@@ -10,7 +10,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:image" content="assets/island.jpg" />
   <link rel="icon" href="assets/char/idle.png" />
-  <link rel="stylesheet" href="css/game.css" />
+  <link rel="stylesheet" href="css/game.css?v=20260815" />
 </head>
 <body>
   <div id="stars"></div>
@@ -37,18 +37,18 @@
         <h2>ぼうけんマップ</h2>
         <div class="stats">
           <span class="stat">なまえ <b id="hub-name">ゆうしゃ</b></span>
-          <span class="stat">スター <b id="hub-stars">0</b></span>
+          <span class="stat">スコア <b id="hub-score">0</b></span>
+          <span class="stat">ベスト <b id="hub-best">0</b></span>
         </div>
       </div>
       <div class="hub-grid">
         <aside class="hub-side">
           <div class="papil-box">
             <img src="assets/char/idle.png" alt="" id="hub-papil" />
-            <div class="say" id="hub-say">どこから　ぼうけんする？　はじめてなら　チュートリアルが　おすすめだよ。</div>
+            <div class="say" id="hub-say">マップを　すすめて　なれよう。とことん点数を　ねらうなら　ハイスコアへ！</div>
           </div>
-          <button class="mode-btn" data-go="tutorial"><span class="ic">📖</span>チュートリアル</button>
-          <button class="mode-btn" data-go="zukan"><span class="ic">✋</span>ゆびずかん</button>
-          <button class="mode-btn" data-go="free"><span class="ic">🎯</span>じゆうれんしゅう</button>
+          <button class="mode-btn" data-go="hajimete"><span class="ic">🌱</span>はじめて</button>
+          <button class="mode-btn" data-go="lessons"><span class="ic">🏆</span>とことんハイスコア</button>
           <button class="mode-btn" data-go="settings"><span class="ic">⚙</span>せってい</button>
         </aside>
         <div class="map-wrap">
@@ -90,9 +90,10 @@
         <button class="icon-btn" id="play-back">←</button>
         <h2 id="play-title">ステージ</h2>
         <div class="stats">
-          <span class="stat">せいせき <b id="st-acc">100</b>%</span>
+          <span class="stat">スコア <b id="st-score">0</b></span>
+          <span class="stat">タイム <b id="st-time">0:00</b></span>
+          <span class="stat">まちがい <b id="st-miss">0</b></span>
           <span class="stat">コンボ <b id="st-combo">0</b></span>
-          <span class="stat">のこり <b id="st-left">0</b></span>
         </div>
       </div>
       <div class="play-body">
@@ -101,10 +102,12 @@
           <div class="bubble" id="play-say">ひかっているキーを、おなじいろのゆびで　おしてね。</div>
         </aside>
         <div class="stage-main">
-          <div class="prompt-board">
+          <div class="prompt-board" id="prompt-board">
             <div class="combo-pop" id="combo-pop"></div>
+            <div class="display-line" id="display-line"></div>
             <div class="kana-line" id="kana-line"></div>
             <div class="roma-line" id="roma-line"></div>
+            <div class="meaning-line" id="meaning-line"></div>
             <div class="progress-bar"><i id="prog"></i></div>
           </div>
           <div class="kb-stage" id="play-kb-stage">
@@ -138,6 +141,47 @@
       </div>
     </section>
 
+    <section id="hajimete" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="haj-back">←</button>
+        <h2>はじめて</h2>
+      </div>
+      <div class="hub-side" style="max-width:640px;margin:20px auto;width:min(640px,92vw)">
+        <p class="tiny" style="margin-top:0">ゆびと　ローマ字を　おぼえるコーナーだよ。</p>
+        <button class="mode-btn" id="haj-tut"><span class="ic">📖</span>レッスン（チュートリアル）</button>
+        <button class="mode-btn" id="haj-zukan" style="margin-top:8px"><span class="ic">✋</span>ゆびずかん</button>
+      </div>
+    </section>
+
+    <section id="lessons" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="les-back">←</button>
+        <h2>とことんハイスコア</h2>
+        <div class="stats">
+          <span class="stat">累計 <b id="les-stars">0</b></span>
+          <span class="stat">ベスト <b id="les-best">0</b></span>
+        </div>
+      </div>
+      <div class="lesson-pick">
+        <div class="pick-block">
+          <div class="pick-label">きょうか</div>
+          <div class="pick-row" id="pick-lang"></div>
+        </div>
+        <div class="pick-block">
+          <div class="pick-label">レベル</div>
+          <div class="pick-row" id="pick-level"></div>
+        </div>
+        <div class="pick-block">
+          <div class="pick-label">かたち</div>
+          <div class="pick-row" id="pick-form"></div>
+        </div>
+        <div class="lesson-summary" id="lesson-summary"></div>
+        <div class="lesson-actions">
+          <button class="btn" id="les-start">スコアに　ちょうせん</button>
+        </div>
+      </div>
+    </section>
+
     <section id="free" class="screen">
       <div class="play-top">
         <button class="icon-btn" id="free-back">←</button>
@@ -153,11 +197,13 @@
       <div class="result-card">
         <img id="res-papil" src="assets/char/cheer.png" alt="" />
         <h2 id="res-title">クリア！</h2>
+        <div class="score-hero"><span id="res-score">0</span><small id="res-newbest" class="hidden">自己ベスト！</small></div>
         <div class="stars-big" id="res-stars">★★★</div>
+        <div class="score-break" id="res-break"></div>
         <div class="result-grid">
           <div>せいかいりつ<b id="res-acc">100%</b></div>
           <div>はやさ<b id="res-spd">0</b></div>
-          <div>さいこうコンボ<b id="res-combo">0</b></div>
+          <div>累計スコア<b id="res-total">0</b></div>
         </div>
         <div style="display:flex;gap:10px;justify-content:center">
           <button class="btn ghost" id="res-hub">マップへ</button>
@@ -190,11 +236,12 @@
     </div>
   </div>
 
-  <script src="js/romaji.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/fx.js"></script>
-  <script src="js/keyboard.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/romaji.js?v=20260815"></script>
+  <script src="js/audio.js?v=20260815"></script>
+  <script src="js/fx.js?v=20260815"></script>
+  <script src="js/keyboard.js?v=20260815"></script>
+  <script src="js/data.js?v=20260815"></script>
+  <script src="js/lessons.js?v=20260815"></script>
+  <script src="js/app.js?v=20260815"></script>
 </body>
 </html>

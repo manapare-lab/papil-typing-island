@@ -20,6 +20,8 @@
     kbMounted: { tutorial: false, play: false, zukan: false },
     imeTimer: null,
     flowTimer: null,
+    playTimer: null,
+    lessonPick: { lang: "ja", level: "e1", form: "word" },
   };
 
   function defaultSave() {
@@ -28,6 +30,9 @@
       tutorialDone: false,
       tutorialStep: 0,
       stars: {},
+      scoreTotal: 0,
+      scoreBest: 0,
+      bestById: {},
       sfx: true,
       bgm: true,
       demo: true,
@@ -52,6 +57,7 @@
       clearTimeout(state.flowTimer);
       state.flowTimer = null;
     }
+    if (state.screen !== id && id !== "play") stopPlayClock();
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("on", s.id === id));
     state.screen = id;
   }
@@ -67,7 +73,67 @@
     return Object.values(state.save.stars).reduce((a, b) => a + b, 0);
   }
   function clearedCount() {
-    return Object.keys(state.save.stars).length;
+    return Object.keys(state.save.stars).filter((k) => k.indexOf("lesson-") !== 0).length;
+  }
+
+  function fmtScore(n) {
+    return String(Math.max(0, n | 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function fmtTime(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m + ":" + String(r).padStart(2, "0");
+  }
+
+  /* せいかい・まちがい・タイムから共通スコア。じっくり正確なほど高い */
+  function calcScore(p, sec) {
+    const ok = p.ok | 0;
+    const miss = p.miss | 0;
+    const acc = ok + miss ? ok / (ok + miss) : 1;
+    const base = ok * 10;
+    const accBonus = Math.round(ok * 10 * acc * acc);
+    const missPen = miss * 35;
+    const expected = Math.max(5, ok * 0.55);
+    let timePts = Math.round((expected - sec) * 10);
+    timePts = Math.max(-ok * 3, Math.min(ok * 7, timePts));
+    const perfect = miss === 0 && ok > 0 ? 400 + ok * 4 : 0;
+    const combo = (p.maxCombo | 0) * 4;
+    const total = Math.max(0, Math.round(base + accBonus + timePts + perfect + combo - missPen));
+    return { total, base, accBonus, timePts, missPen, perfect, combo, acc, sec, ok, miss };
+  }
+
+  function applySharedScore(sc, stageId) {
+    if (!state.save.bestById) state.save.bestById = {};
+    state.save.scoreTotal = (state.save.scoreTotal || 0) + sc.total;
+    const isBestRun = sc.total > (state.save.scoreBest || 0);
+    if (isBestRun) state.save.scoreBest = sc.total;
+    const prevPack = state.save.bestById[stageId] || 0;
+    const isBestPack = sc.total > prevPack;
+    if (isBestPack) state.save.bestById[stageId] = sc.total;
+    persist();
+    return { isBestRun, isBestPack, prevPack };
+  }
+
+  function liveScore() {
+    const p = state.play;
+    if (!p) return 0;
+    return calcScore(p, Math.max(0.2, (Date.now() - p.start) / 1000)).total;
+  }
+
+  function stopPlayClock() {
+    if (state.playTimer) {
+      clearInterval(state.playTimer);
+      state.playTimer = null;
+    }
+  }
+  function startPlayClock() {
+    stopPlayClock();
+    state.playTimer = setInterval(() => {
+      if (!state.play || state.screen !== "play") return;
+      if ($("st-time")) $("st-time").textContent = fmtTime((Date.now() - state.play.start) / 1000);
+      if ($("st-score")) $("st-score").textContent = fmtScore(liveScore());
+    }, 200);
   }
 
   /* ---------- screens ---------- */
@@ -75,10 +141,11 @@
   function goHub() {
     show("hub");
     $("hub-name").textContent = state.save.name || "ゆうしゃ";
-    $("hub-stars").textContent = starsEarned();
+    $("hub-score").textContent = fmtScore(state.save.scoreTotal || 0);
+    $("hub-best").textContent = fmtScore(state.save.scoreBest || 0);
     $("hub-say").textContent = state.save.tutorialDone
-      ? "マップのステージを　えらんでね。ゆびずかんで　いつでも　みなおせるよ。"
-      : "はじめてなら　まずは　チュートリアルだよ。ゆびのいえを　おぼえよう！";
+      ? "マップで　だんだん　なれよう。点数を　ねらうなら　とことんハイスコアへ！"
+      : "はじめてなら　まずは　「はじめて」のレッスンだよ。";
     renderMap();
   }
   function renderMap() {
@@ -287,7 +354,9 @@
   /* ---------- play ---------- */
   function startStage(stage, free) {
     const items = [];
-    if (stage.kind === "alpha") {
+    if (stage.items) {
+      stage.items.forEach((it) => items.push(it));
+    } else if (stage.kind === "alpha") {
       const s = DATA.buildAlpha(stage.chars, stage.len);
       items.push({ mode: "alpha", text: s, display: s });
     } else {
@@ -311,6 +380,7 @@
     $("play-title").textContent = stage.name;
     $("play-say").textContent = stage.blurb + "　／　ひかるキーを、おなじいろのゆびで！";
     setPapil($("play-papil"), "think");
+    startPlayClock();
     loadPlayItem();
     updatePlayStats();
   }
@@ -322,6 +392,8 @@
     p.engine = item.mode === "romaji" ? new Romaji.RomajiEngine(item.text) : new Romaji.AlphaEngine(item.text);
     p.engine._mode = item.mode;
     p.engine._src = item.text;
+    p.engine._display = item.display || item.text;
+    p.engine._meaning = item.meaning || "";
     updatePlayPrompt();
     KB.setTargets(p.engine.nextKeys());
     updatePlayStats();
@@ -331,12 +403,25 @@
     const p = state.play;
     const eng = p.engine;
     const src = eng._src;
+    const disp = eng._display || "";
+    const meaning = eng._meaning || "";
+    const board = $("prompt-board");
+    if (board) board.classList.toggle("long", !!(p.stage && p.stage.form === "long") || src.length > 28);
+    const dEl = $("display-line");
+    const mEl = $("meaning-line");
+    if (dEl) {
+      const showDisp = disp && disp.replace(/\s/g, "") !== String(src).replace(/\s/g, "") &&
+        disp.toLowerCase().replace(/[.,!?'"]/g, "") !== String(src).toLowerCase().replace(/[.,!?'"]/g, "");
+      dEl.textContent = showDisp ? disp : "";
+    }
+    if (mEl) mEl.textContent = meaning ? "いみ： " + meaning : "";
     if (eng._mode === "romaji") {
-      const doneK = src.slice(0, eng.pos);
-      const restK = src.slice(eng.pos);
+      const typedSrc = (typeof Romaji.cleanTypingKana === "function") ? Romaji.cleanTypingKana(src) : src;
+      const doneK = typedSrc.slice(0, eng.pos);
+      const restK = typedSrc.slice(eng.pos);
       $("kana-line").innerHTML = `<span class="done">${esc(doneK)}</span><span class="now">${esc(restK[0] || "")}</span><span class="wait">${esc(restK.slice(1))}</span>`;
       $("roma-line").innerHTML = `<span class="done">${esc(eng.typedDisplay())}</span><span class="rest">${esc(eng.hint())}</span>`;
-      const pct = ((p.index + (src.length ? eng.pos / src.length : 1)) / p.items.length) * 100;
+      const pct = ((p.index + (typedSrc.length ? eng.pos / typedSrc.length : 1)) / p.items.length) * 100;
       $("prog").style.width = pct + "%";
     } else {
       const t = String(src);
@@ -346,51 +431,116 @@
         const cls = idx < i ? "done" : idx === i ? "now" : "wait";
         return `<span class="${cls}">${esc(show)}</span>`;
       }).join("");
-      $("roma-line").innerHTML = `<span class="rest">ひかっているキーを、おなじいろのゆびで</span>`;
-      $("prog").style.width = (t.length ? (i / t.length) * 100 : 0) + "%";
+      $("roma-line").innerHTML = meaning
+        ? `<span class="rest">えいごで　うとう</span>`
+        : `<span class="rest">ひかっているキーを、おなじいろのゆびで</span>`;
+      const itemPct = p.items.length > 1
+        ? ((p.index + (t.length ? i / t.length : 1)) / p.items.length) * 100
+        : (t.length ? (i / t.length) * 100 : 0);
+      $("prog").style.width = itemPct + "%";
     }
   }
 
   function updatePlayStats() {
     const p = state.play;
-    const total = p.ok + p.miss;
-    const acc = total ? Math.round((p.ok / total) * 100) : 100;
-    $("st-acc").textContent = acc;
-    $("st-combo").textContent = p.combo;
-    const left = p.engine && p.engine._mode === "alpha"
-      ? Math.max(0, (p.engine.text || "").length - (p.engine.i || 0))
-      : p.items.length - p.index;
-    $("st-left").textContent = left;
+    if ($("st-combo")) $("st-combo").textContent = p.combo;
+    if ($("st-miss")) $("st-miss").textContent = p.miss;
+    if ($("st-score")) $("st-score").textContent = fmtScore(liveScore());
+    if ($("st-time")) $("st-time").textContent = fmtTime((Date.now() - p.start) / 1000);
   }
 
   function finishPlay() {
     KB.stopDemo();
+    stopPlayClock();
     Fx.floats = [];
     const p = state.play;
     const total = p.ok + p.miss;
     const acc = total ? p.ok / total : 1;
-    const sec = Math.max(1, (Date.now() - p.start) / 1000);
+    const sec = Math.max(0.4, (Date.now() - p.start) / 1000);
     const cpm = Math.round((p.ok / sec) * 60);
+    const sc = calcScore(p, sec);
     let stars = 1;
     if (acc >= 0.9) stars = 2;
     if (acc >= 0.96 && p.maxCombo >= 8) stars = 3;
     if (acc >= 0.99 && cpm >= 80) stars = 3;
-    if (!p.free) {
+    if (sc.miss === 0 && sc.ok >= 12) stars = Math.max(stars, 3);
+    let bestFlags = { isBestRun: false, isBestPack: false };
+    if (!p.free || (p.stage && p.stage.trackStars)) {
       const prev = state.save.stars[p.stage.id] || 0;
       state.save.stars[p.stage.id] = Math.max(prev, stars);
-      persist();
+      bestFlags = applySharedScore(sc, p.stage.id);
     }
+    p.lastScore = sc;
     show("result");
-    $("res-title").textContent = p.free ? "れんしゅう　おわり！" : stars >= 3 ? "パーフェクト！" : "クリア！";
+    const isHi = p.stage && p.stage.kind === "lesson";
+    $("res-title").textContent = p.free && !(p.stage && p.stage.trackStars)
+      ? "れんしゅう　おわり！"
+      : bestFlags.isBestRun ? "自己ベスト！！" : stars >= 3 ? "パーフェクト！" : "クリア！";
+    $("res-score").textContent = fmtScore(sc.total);
+    $("res-newbest").classList.toggle("hidden", !bestFlags.isBestPack);
     $("res-stars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+    $("res-break").innerHTML =
+      `<div class="plus">せいかい <b>+${fmtScore(sc.base + sc.accBonus)}</b></div>` +
+      `<div class="${sc.timePts >= 0 ? "plus" : "minus"}">タイム <b>${sc.timePts >= 0 ? "+" : ""}${fmtScore(sc.timePts)}</b></div>` +
+      `<div class="minus">まちがい <b>-${fmtScore(sc.missPen)}</b></div>` +
+      `<div class="plus">れんぞく <b>+${fmtScore(sc.combo + sc.perfect)}</b></div>`;
     $("res-acc").textContent = Math.round(acc * 100) + "%";
     $("res-spd").textContent = cpm + " キー/分";
-    $("res-combo").textContent = p.maxCombo;
-    setPapil($("res-papil"), stars >= 2 ? "cheer" : "idle");
-    if (stars >= 2) { Sfx.fanfare(); Fx.confetti(); }
+    $("res-total").textContent = fmtScore(state.save.scoreTotal || 0);
+    setPapil($("res-papil"), stars >= 2 || bestFlags.isBestRun ? "cheer" : "idle");
+    if (stars >= 2 || bestFlags.isBestRun) { Sfx.fanfare(); Fx.confetti(); }
     else Sfx.star();
-    const idx = DATA.STAGES.findIndex((s) => s.id === p.stage.id);
-    $("res-next").classList.toggle("hidden", p.free || idx < 0 || idx >= DATA.STAGES.length - 1);
+    const hasNext = nextStageOf(p.stage);
+    $("res-next").classList.toggle("hidden", !hasNext);
+    $("res-next").textContent = isHi ? "つぎのコース" : "つぎのステージ";
+    $("res-hub").textContent = isHi || (p.from === "lessons") ? "コースへ" : "マップへ";
+  }
+
+  function nextStageOf(stage) {
+    if (!stage) return null;
+    if (stage.kind === "lesson") {
+      const n = LESSONS.nextPack(stage.lang, stage.level, stage.form);
+      if (!n) return null;
+      if (!isLevelOpen(n.lang, n.level)) return null;
+      return n;
+    }
+    const idx = DATA.STAGES.findIndex((s) => s.id === stage.id);
+    return idx >= 0 ? DATA.STAGES[idx + 1] || null : null;
+  }
+
+  function isLevelOpen(lang, levelId) {
+    const idx = LESSONS.LEVELS.findIndex((l) => l.id === levelId);
+    if (idx <= 0) return true;
+    const prev = LESSONS.LEVELS[idx - 1];
+    return LESSONS.FORMS.some((f) => (state.save.stars[LESSONS.packId(lang, prev.id, f.id)] || 0) >= 2);
+  }
+
+  function lessonStarTotal() {
+    return Object.keys(state.save.stars)
+      .filter((k) => k.indexOf("lesson-") === 0)
+      .reduce((a, k) => a + (state.save.stars[k] || 0), 0);
+  }
+
+  function startLessonPack(lang, level, form) {
+    const meta = LESSONS.packMeta(lang, level, form);
+    const pool = LESSONS.getItems(lang, level, form);
+    const want = form === "word" ? 20 : form === "sentence" ? 8 : 4;
+    const take = Math.min(want, pool.length);
+    const picked = DATA.buildPool(pool, take);
+    const stage = {
+      id: meta.id,
+      name: meta.name,
+      blurb: meta.blurb,
+      kind: "lesson",
+      lang, level, form,
+      trackStars: true,
+      items: LESSONS.toPlayItems(lang, picked),
+    };
+    startStage(stage, false);
+    if (state.play) state.play.from = "lessons";
+    $("play-say").textContent = lang === "en"
+      ? "ハイスコアねらい！　いみをみながら、まちがいすくなく　うとう。"
+      : "ハイスコアねらい！　ローマ字で　ていねいに　うとう。";
   }
 
   /* ---------- zukan / free / settings ---------- */
@@ -422,6 +572,73 @@
       .map(([k]) => (k === " " ? "スペース" : k.toUpperCase()));
     $("zukan-say").textContent = f.name + " のキーは　" + keys.join("  ") + "。ホームは　" +
       (FINGER_MAP.HOME[id] === " " ? "スペース" : String(FINGER_MAP.HOME[id]).toUpperCase()) + " だよ。";
+  }
+
+  function goLessons() {
+    show("lessons");
+    $("les-stars").textContent = fmtScore(state.save.scoreTotal || 0);
+    if ($("les-best")) $("les-best").textContent = fmtScore(state.save.scoreBest || 0);
+    renderLessonPick();
+  }
+
+  function renderLessonPick() {
+    const pick = state.lessonPick;
+    const langBox = $("pick-lang");
+    const lvBox = $("pick-level");
+    const formBox = $("pick-form");
+    langBox.innerHTML = "";
+    LESSONS.LANGS.forEach((lg) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (pick.lang === lg.id ? " on" : "");
+      b.innerHTML = lg.icon + " " + lg.name + `<span class="sub">${lg.blurb}</span>`;
+      b.addEventListener("click", () => {
+        Sfx.click();
+        pick.lang = lg.id;
+        if (!isLevelOpen(pick.lang, pick.level)) pick.level = "e1";
+        renderLessonPick();
+      });
+      langBox.appendChild(b);
+    });
+    lvBox.innerHTML = "";
+    LESSONS.LEVELS.forEach((lv) => {
+      const open = isLevelOpen(pick.lang, lv.id);
+      const best = Math.max.apply(null, LESSONS.FORMS.map((f) => state.save.stars[LESSONS.packId(pick.lang, lv.id, f.id)] || 0).concat([0]));
+      const b = document.createElement("button");
+      b.className = "chip" + (pick.level === lv.id ? " on" : "") + (open ? "" : " locked");
+      b.innerHTML = (open ? "" : "🔒 ") + lv.short + `<span class="sub">${lv.name}${best ? "　★" + best : ""}</span>`;
+      b.addEventListener("click", () => {
+        Sfx.click();
+        if (!open) {
+          $("lesson-summary").innerHTML = "<h3>まだ　ひみつだよ</h3><p>ひとつまえのレベルで　★★　いじょうをとると　ひらくよ。</p>";
+          return;
+        }
+        pick.level = lv.id;
+        renderLessonPick();
+      });
+      lvBox.appendChild(b);
+    });
+    formBox.innerHTML = "";
+    LESSONS.FORMS.forEach((f) => {
+      const stars = state.save.stars[LESSONS.packId(pick.lang, pick.level, f.id)] || 0;
+      const b = document.createElement("button");
+      b.className = "chip" + (pick.form === f.id ? " on" : "");
+      const packBest = (state.save.bestById && state.save.bestById[LESSONS.packId(pick.lang, pick.level, f.id)]) || 0;
+      b.innerHTML = f.icon + " " + f.name + `<span class="sub">${f.blurb}　ベスト ${fmtScore(packBest)}</span>`;
+      b.addEventListener("click", () => {
+        Sfx.click();
+        pick.form = f.id;
+        renderLessonPick();
+      });
+      formBox.appendChild(b);
+    });
+    const meta = LESSONS.packMeta(pick.lang, pick.level, pick.form);
+    const stars = state.save.stars[meta.id] || 0;
+    const packBest = (state.save.bestById && state.save.bestById[meta.id]) || 0;
+    const take = meta.form === "word" ? Math.min(20, meta.count) : meta.form === "sentence" ? Math.min(8, meta.count) : Math.min(4, meta.count);
+    $("lesson-summary").innerHTML =
+      `<h3>${meta.name}</h3>
+       <p>じっくり　うって　ハイスコアを　ねらおう。タイムと　まちがいから　点がつくよ。<br>
+       ${take} もん　／　このコースのベスト <b>${fmtScore(packBest)}</b>　／　${"★".repeat(stars)}${"☆".repeat(3 - stars)} でつぎのレベル</p>`;
   }
 
   function goFree() {
@@ -588,9 +805,12 @@
       handleChar(ch, e);
     }
     if (e.key === "Escape") {
-      if (state.screen === "play" || state.screen === "tutorial" || state.screen === "zukan" || state.screen === "free" || state.screen === "settings" || state.screen === "result") {
+      if (state.screen === "play" || state.screen === "tutorial" || state.screen === "zukan" || state.screen === "free" || state.screen === "lessons" || state.screen === "settings" || state.screen === "result") {
         KB.stopDemo();
-        goHub();
+        if (state.screen === "play" && state.play && state.play.from === "lessons") goLessons();
+        else if (state.screen === "result" && state.play && state.play.from === "lessons") goLessons();
+        else if (state.screen === "lessons" || state.screen === "hajimete") goHub();
+        else goHub();
       } else if (state.screen === "hub") goTitle();
     }
   });
@@ -627,9 +847,17 @@
   });
   $("hub-back").addEventListener("click", goTitle);
   $("tut-back").addEventListener("click", () => { KB.stopDemo(); goHub(); });
-  $("play-back").addEventListener("click", () => { KB.stopDemo(); goHub(); });
+  $("play-back").addEventListener("click", () => {
+    KB.stopDemo();
+    if (state.play && state.play.from === "lessons") goLessons();
+    else goHub();
+  });
   $("zukan-back").addEventListener("click", () => { KB.onKeyClick = null; KB.stopDemo(); goHub(); });
   $("free-back").addEventListener("click", goHub);
+  $("les-back").addEventListener("click", goHub);
+  $("haj-back").addEventListener("click", goHub);
+  $("haj-tut").addEventListener("click", () => { Sfx.click(); startTutorial(0); });
+  $("haj-zukan").addEventListener("click", () => { Sfx.click(); goZukan(); });
   $("set-back").addEventListener("click", goHub);
   document.querySelectorAll(".mode-btn[data-go]").forEach((b) => {
     b.addEventListener("click", () => {
@@ -638,6 +866,8 @@
       if (go === "tutorial") startTutorial(0);
       if (go === "zukan") goZukan();
       if (go === "free") goFree();
+      if (go === "lessons") goLessons();
+      if (go === "hajimete") { show("hajimete"); }
       if (go === "settings") goSettings();
     });
   });
@@ -659,16 +889,32 @@
     if (state.tutIndex >= DATA.TUTORIAL.length) finishTutorial();
     else renderTutorial();
   });
-  $("res-hub").addEventListener("click", goHub);
+  $("res-hub").addEventListener("click", () => {
+    if (state.play && state.play.from === "lessons") goLessons();
+    else goHub();
+  });
   $("res-retry").addEventListener("click", () => {
     const st = state.play && state.play.stage;
-    if (st) startStage(st, state.play.free);
+    if (!st) return;
+    if (st.kind === "lesson") startLessonPack(st.lang, st.level, st.form);
+    else startStage(st, state.play.free);
   });
   $("res-next").addEventListener("click", () => {
-    const id = state.play && state.play.stage && state.play.stage.id;
-    const idx = DATA.STAGES.findIndex((s) => s.id === id);
-    if (idx >= 0 && DATA.STAGES[idx + 1]) startStage(DATA.STAGES[idx + 1]);
+    const st = state.play && state.play.stage;
+    const next = nextStageOf(st);
+    if (st && st.kind === "lesson") {
+      if (next) startLessonPack(next.lang, next.level, next.form);
+      else goLessons();
+      return;
+    }
+    if (next) startStage(next);
     else goHub();
+  });
+  $("les-start").addEventListener("click", () => {
+    Sfx.click();
+    const p = state.lessonPick;
+    if (!isLevelOpen(p.lang, p.level)) return;
+    startLessonPack(p.lang, p.level, p.form);
   });
   $("tog-bgm").addEventListener("click", () => {
     state.save.bgm = !state.save.bgm;
