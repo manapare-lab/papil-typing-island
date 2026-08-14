@@ -1,0 +1,9 @@
+{
+  "name": "papil-typing-island",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check js/app.js && node --check js/audio.js && node --check js/data.js && node --check js/fx.js && node --check js/keyboard.js && node --check js/romaji.js"
+  }
+}

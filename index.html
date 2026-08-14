@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>パピルのタイピング島</title>
+  <meta name="description" content="パピルと一緒に、指づかいとローマ字入力を楽しく練習できるタイピングゲームです。" />
+  <meta property="og:title" content="パピルのタイピング島" />
+  <meta property="og:description" content="指づかいからローマ字入力まで、冒険しながら練習できる学習ゲーム。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/island.jpg" />
+  <link rel="icon" href="assets/char/idle.png" />
+  <link rel="stylesheet" href="css/game.css" />
+</head>
+<body>
+  <div id="stars"></div>
+  <canvas id="fx"></canvas>
+  <div id="app">
+
+    <section id="title" class="screen on">
+      <div class="title-card">
+        <img class="papil" src="assets/char/cheer.png" alt="パピル" />
+        <h1>パピルのタイピング島</h1>
+        <p class="lead">ローマ字で　まほうのカギを　手にいれよう</p>
+        <div class="title-actions">
+          <button class="btn" id="btn-start">はじめる</button>
+          <button class="btn mint" id="btn-continue">つづける</button>
+          <button class="btn ghost" id="btn-howto">あそびかた</button>
+        </div>
+        <p class="tiny" style="margin-top:14px">小学生・中学生むけ　／　ローマ字にゅうりょくせんよう　／　えいすうモードでね</p>
+      </div>
+    </section>
+
+    <section id="hub" class="screen">
+      <div class="topbar">
+        <button class="icon-btn" id="hub-back" title="タイトルへ">←</button>
+        <h2>ぼうけんマップ</h2>
+        <div class="stats">
+          <span class="stat">なまえ <b id="hub-name">ゆうしゃ</b></span>
+          <span class="stat">スター <b id="hub-stars">0</b></span>
+        </div>
+      </div>
+      <div class="hub-grid">
+        <aside class="hub-side">
+          <div class="papil-box">
+            <img src="assets/char/idle.png" alt="" id="hub-papil" />
+            <div class="say" id="hub-say">どこから　ぼうけんする？　はじめてなら　チュートリアルが　おすすめだよ。</div>
+          </div>
+          <button class="mode-btn" data-go="tutorial"><span class="ic">📖</span>チュートリアル</button>
+          <button class="mode-btn" data-go="zukan"><span class="ic">✋</span>ゆびずかん</button>
+          <button class="mode-btn" data-go="free"><span class="ic">🎯</span>じゆうれんしゅう</button>
+          <button class="mode-btn" data-go="settings"><span class="ic">⚙</span>せってい</button>
+        </aside>
+        <div class="map-wrap">
+          <img class="island" src="assets/island.jpg" alt="" />
+          <div class="map-stages" id="map-stages"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tutorial" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="tut-back">←</button>
+        <h2 id="tut-title">チュートリアル</h2>
+        <div class="stats"><span class="stat">ステップ <b id="tut-step">1</b></span></div>
+      </div>
+      <div class="play-body">
+        <aside class="coach">
+          <img class="papil" id="tut-papil" src="assets/char/teach.png" alt="パピル" />
+          <div class="bubble" id="tut-say"></div>
+        </aside>
+        <div class="stage-main">
+          <div id="tut-extra"></div>
+          <div class="kb-stage" id="tut-kb-stage">
+            <div class="finger-label"></div>
+            <div class="kb"></div>
+            <div class="hands"></div>
+            <div class="ime-warn" id="tut-ime">にほんごにゅうりょくに　なってるよ。「英数」キーを　おしてね。</div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+            <button class="btn ghost" id="tut-skip">このページを　とばす</button>
+            <button class="btn" id="tut-next">つぎへ</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="play" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="play-back">←</button>
+        <h2 id="play-title">ステージ</h2>
+        <div class="stats">
+          <span class="stat">せいせき <b id="st-acc">100</b>%</span>
+          <span class="stat">コンボ <b id="st-combo">0</b></span>
+          <span class="stat">のこり <b id="st-left">0</b></span>
+        </div>
+      </div>
+      <div class="play-body">
+        <aside class="coach">
+          <img class="papil" id="play-papil" src="assets/char/think.png" alt="パピル" />
+          <div class="bubble" id="play-say">ひかっているキーを、おなじいろのゆびで　おしてね。</div>
+        </aside>
+        <div class="stage-main">
+          <div class="prompt-board">
+            <div class="combo-pop" id="combo-pop"></div>
+            <div class="kana-line" id="kana-line"></div>
+            <div class="roma-line" id="roma-line"></div>
+            <div class="progress-bar"><i id="prog"></i></div>
+          </div>
+          <div class="kb-stage" id="play-kb-stage">
+            <div class="finger-label"></div>
+            <div class="kb"></div>
+            <div class="hands"></div>
+            <div class="ime-warn" id="play-ime">にほんごにゅうりょくに　なってるよ。「英数」キーを　おしてね。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="zukan" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="zukan-back">←</button>
+        <h2>ゆびずかん</h2>
+      </div>
+      <div class="play-body">
+        <aside class="coach">
+          <img class="papil" src="assets/char/teach.png" alt="" />
+          <div class="bubble" id="zukan-say">ゆびを　おすと、そのゆびが　たんとうするキーが　ひかるよ。キーを　おしても　みられるよ。</div>
+        </aside>
+        <div class="stage-main">
+          <div class="zukan-grid" id="zukan-grid"></div>
+          <div class="kb-stage" id="zukan-kb-stage">
+            <div class="finger-label"></div>
+            <div class="kb"></div>
+            <div class="hands"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="free" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="free-back">←</button>
+        <h2>じゆうれんしゅう</h2>
+      </div>
+      <div class="hub-side" style="max-width:640px;margin:20px auto;width:min(640px,92vw)">
+        <p class="tiny" style="margin-top:0">すきなメニューを　えらんでね。ぼうけんのスターには　はいらないよ。</p>
+        <div id="free-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </section>
+
+    <section id="result" class="screen">
+      <div class="result-card">
+        <img id="res-papil" src="assets/char/cheer.png" alt="" />
+        <h2 id="res-title">クリア！</h2>
+        <div class="stars-big" id="res-stars">★★★</div>
+        <div class="result-grid">
+          <div>せいかいりつ<b id="res-acc">100%</b></div>
+          <div>はやさ<b id="res-spd">0</b></div>
+          <div>さいこうコンボ<b id="res-combo">0</b></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn ghost" id="res-hub">マップへ</button>
+          <button class="btn" id="res-retry">もういちど</button>
+          <button class="btn mint" id="res-next">つぎのステージ</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" class="screen">
+      <div class="play-top">
+        <button class="icon-btn" id="set-back">←</button>
+        <h2>せってい</h2>
+      </div>
+      <div class="settings-list">
+        <div class="set-row">おんがく <button class="toggle on" id="tog-bgm"><i></i></button></div>
+        <div class="set-row">こうかおん <button class="toggle on" id="tog-sfx"><i></i></button></div>
+        <div class="set-row">ゆびのデモアニメ <button class="toggle on" id="tog-demo"><i></i></button></div>
+        <div class="set-row">なまえを　かえる <button class="btn" id="btn-rename" style="padding:8px 16px;font-size:16px">へんこう</button></div>
+        <div class="set-row">データをけす <button class="btn pink" id="btn-reset" style="padding:8px 16px;font-size:16px">リセット</button></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="name-modal" id="name-modal">
+    <div class="name-box">
+      <h3>きみの　なまえは？</h3>
+      <input id="name-input" maxlength="12" placeholder="なまえ" />
+      <button class="btn" id="name-ok">これでいく！</button>
+    </div>
+  </div>
+
+  <script src="js/romaji.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
