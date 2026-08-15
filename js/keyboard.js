@@ -22,7 +22,8 @@
   assign(["6", "7", "y", "u", "h", "j", "n", "m"], "RI");
   assign(["8", "i", "k", ","], "RM");
   assign(["9", "o", "l", "."], "RR");
-  assign(["0", "-", "=", "p", "[", "]", ";", "'", "/"], "RP");
+  assign(["0", "-", "=", "p", "[", "]", ";", "'", "/", "?"], "RP");
+  assign(["!"], "LP");
 
   const HOME = { LP: "a", LR: "s", LM: "d", LI: "f", RI: "j", RM: "k", RR: "l", RP: ";", TH: " " };
 
@@ -192,7 +193,9 @@
     },
 
     keyEl(ch) {
-      return this.el.querySelector(`[data-key="${cssEscape(ch)}"]`);
+      const alias = { "?": "/", "!": "1" };
+      const id = alias[ch] || ch;
+      return this.el.querySelector(`[data-key="${cssEscape(id)}"]`);
     },
 
     clear() {
@@ -246,7 +249,7 @@
         if (!fid || seen.has(fid)) return;
         seen.add(fid);
         const f = FINGER[fid];
-        const pretty = ch === " " ? "スペース" : ch.toUpperCase();
+        const pretty = ch === " " ? "スペース" : ch === "?" ? "シフト + /" : ch === "!" ? "シフト + 1" : ch === "." ? "。" : ch === "," ? "、" : ch.toUpperCase();
         bits.push(
           `<span class="fl-chip" style="--kc:${f.color}">
             <b>${pretty}</b> は <em>${f.name}</em>

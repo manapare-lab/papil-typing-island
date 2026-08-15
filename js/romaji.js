@@ -56,12 +56,14 @@
     return String(s).replace(/[\u30A1-\u30F6ー]/g, (ch) => HIRA_FROM_KATA[ch] || ch);
   }
 
-  function cleanTypingKana(s) {
-    return toHiragana(s)
-      .replace(/[、。！？!?,.・…「」『』（）()：:；;]/g, "")
-      .replace(/　/g, " ")
-      .replace(/ {2,}/g, " ")
-      .replace(/^ +| +$/g, "");
+  function cleanTypingKana(s, keepPunct) {
+    let out = toHiragana(s).replace(/[\s　]+/g, "");
+    if (keepPunct) {
+      out = out.replace(/[・…「」『』（）()：:；;]/g, "");
+      out = out.replace(/．/g, "。").replace(/，/g, "、");
+      return out;
+    }
+    return out.replace(/[、。！？!?,.・…「」『』（）()：:；;]/g, "");
   }
 
   function nextMora(kana) {
@@ -92,6 +94,22 @@
 
     if (head === " " || head === "　") {
       out.push({ roman: " ", consume: 1 });
+      return out;
+    }
+    if (head === "。" || head === "．" || head === ".") {
+      out.push({ roman: ".", consume: 1 });
+      return out;
+    }
+    if (head === "、" || head === "，" || head === ",") {
+      out.push({ roman: ",", consume: 1 });
+      return out;
+    }
+    if (head === "？" || head === "?") {
+      out.push({ roman: "?", consume: 1 });
+      return out;
+    }
+    if (head === "！" || head === "!") {
+      out.push({ roman: "!", consume: 1 });
       return out;
     }
 
@@ -143,6 +161,26 @@
         rest = rest.slice(1);
         continue;
       }
+      if (rest[0] === "。" || rest[0] === "．" || rest[0] === ".") {
+        s += ".";
+        rest = rest.slice(1);
+        continue;
+      }
+      if (rest[0] === "、" || rest[0] === "，" || rest[0] === ",") {
+        s += ",";
+        rest = rest.slice(1);
+        continue;
+      }
+      if (rest[0] === "？" || rest[0] === "?") {
+        s += "?";
+        rest = rest.slice(1);
+        continue;
+      }
+      if (rest[0] === "！" || rest[0] === "!") {
+        s += "!";
+        rest = rest.slice(1);
+        continue;
+      }
       if (rest[0] === "っ") {
         const nxt = nextMora(rest.slice(1));
         if (nxt) {
@@ -168,9 +206,10 @@
   }
 
   class RomajiEngine {
-    constructor(kana) {
+    constructor(kana, opts) {
       this.source = String(kana);
-      this.kana = cleanTypingKana(kana);
+      this.keepPunct = !!(opts && opts.punct);
+      this.kana = cleanTypingKana(kana, this.keepPunct);
       this.pos = 0;
       this.buf = "";
       this.typedRoman = "";

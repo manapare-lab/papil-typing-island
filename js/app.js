@@ -21,7 +21,7 @@
     imeTimer: null,
     flowTimer: null,
     playTimer: null,
-    lessonPick: { lang: "ja", level: "e1", form: "word" },
+    lessonPick: { lang: "ja", level: "e1", form: "word", advanced: false },
   };
 
   function defaultSave() {
@@ -389,7 +389,9 @@
     const p = state.play;
     if (p.index >= p.items.length) { finishPlay(); return; }
     const item = p.items[p.index];
-    p.engine = item.mode === "romaji" ? new Romaji.RomajiEngine(item.text) : new Romaji.AlphaEngine(item.text);
+    p.engine = item.mode === "romaji"
+      ? new Romaji.RomajiEngine(item.text, { punct: !!(p.stage && p.stage.advanced) })
+      : new Romaji.AlphaEngine(item.text);
     p.engine._mode = item.mode;
     p.engine._src = item.text;
     p.engine._display = item.display || item.text;
@@ -416,7 +418,9 @@
     }
     if (mEl) mEl.textContent = meaning ? "いみ： " + meaning : "";
     if (eng._mode === "romaji") {
-      const typedSrc = (typeof Romaji.cleanTypingKana === "function") ? Romaji.cleanTypingKana(src) : src;
+      const typedSrc = (typeof Romaji.cleanTypingKana === "function")
+        ? Romaji.cleanTypingKana(src, !!(p.stage && p.stage.advanced))
+        : src;
       const doneK = typedSrc.slice(0, eng.pos);
       const restK = typedSrc.slice(eng.pos);
       $("kana-line").innerHTML = `<span class="done">${esc(doneK)}</span><span class="now">${esc(restK[0] || "")}</span><span class="wait">${esc(restK.slice(1))}</span>`;
@@ -512,7 +516,7 @@
     const idx = LESSONS.LEVELS.findIndex((l) => l.id === levelId);
     if (idx <= 0) return true;
     const prev = LESSONS.LEVELS[idx - 1];
-    return LESSONS.FORMS.some((f) => (state.save.stars[LESSONS.packId(lang, prev.id, f.id)] || 0) >= 2);
+    return LESSONS.FORMS.some((f) => packStars(lang, prev.id, f.id) >= 2);
   }
 
   function lessonStarTotal() {
@@ -521,26 +525,39 @@
       .reduce((a, k) => a + (state.save.stars[k] || 0), 0);
   }
 
-  function startLessonPack(lang, level, form) {
+  function packStars(lang, level, form) {
+    return Math.max(
+      state.save.stars[LESSONS.packId(lang, level, form)] || 0,
+      state.save.stars[LESSONS.packId(lang, level, form, true)] || 0
+    );
+  }
+
+  function startLessonPack(lang, level, form, advanced) {
+    if (advanced == null) advanced = !!(state.lessonPick && state.lessonPick.advanced);
     const meta = LESSONS.packMeta(lang, level, form);
     const pool = LESSONS.getItems(lang, level, form);
     const want = form === "word" ? 20 : form === "sentence" ? 8 : 4;
     const take = Math.min(want, pool.length);
     const picked = DATA.buildPool(pool, take);
     const stage = {
-      id: meta.id,
-      name: meta.name,
-      blurb: meta.blurb,
+      id: LESSONS.packId(lang, level, form, advanced),
+      name: meta.name + (advanced ? "　上級" : ""),
+      blurb: advanced ? "句読点も　うとう" : meta.blurb,
       kind: "lesson",
       lang, level, form,
+      advanced: !!advanced,
       trackStars: true,
-      items: LESSONS.toPlayItems(lang, picked),
+      items: LESSONS.toPlayItems(lang, picked, form, advanced),
     };
     startStage(stage, false);
     if (state.play) state.play.from = "lessons";
-    $("play-say").textContent = lang === "en"
-      ? "ハイスコアねらい！　いみをみながら、まちがいすくなく　うとう。"
-      : "ハイスコアねらい！　ローマ字で　ていねいに　うとう。";
+    $("play-say").textContent = advanced
+      ? (lang === "en"
+        ? "上級！　ピリオドや　カンマも　うとう。"
+        : "上級！　まる（.）と　てん（,）も　うとう。")
+      : (lang === "en"
+        ? "ハイスコアねらい！　いみをみながら、まちがいすくなく　うとう。"
+        : "ハイスコアねらい！　ローマ字で　ていねいに　うとう。");
   }
 
   /* ---------- zukan / free / settings ---------- */
@@ -617,12 +634,30 @@
       });
       lvBox.appendChild(b);
     });
+    const diffBox = $("pick-diff");
+    if (diffBox) {
+      diffBox.innerHTML = "";
+      [
+        { id: false, name: "ふつう", sub: "スペース・句読点なし" },
+        { id: true, name: "上級", sub: "、。？！ もうつ" },
+      ].forEach((df) => {
+        const b = document.createElement("button");
+        b.className = "chip" + (!!pick.advanced === df.id ? " on" : "");
+        b.innerHTML = df.name + `<span class="sub">${df.sub}</span>`;
+        b.addEventListener("click", () => {
+          Sfx.click();
+          pick.advanced = df.id;
+          renderLessonPick();
+        });
+        diffBox.appendChild(b);
+      });
+    }
     formBox.innerHTML = "";
     LESSONS.FORMS.forEach((f) => {
       const stars = state.save.stars[LESSONS.packId(pick.lang, pick.level, f.id)] || 0;
       const b = document.createElement("button");
       b.className = "chip" + (pick.form === f.id ? " on" : "");
-      const packBest = (state.save.bestById && state.save.bestById[LESSONS.packId(pick.lang, pick.level, f.id)]) || 0;
+      const packBest = (state.save.bestById && state.save.bestById[LESSONS.packId(pick.lang, pick.level, f.id, pick.advanced)]) || 0;
       b.innerHTML = f.icon + " " + f.name + `<span class="sub">${f.blurb}　ベスト ${fmtScore(packBest)}</span>`;
       b.addEventListener("click", () => {
         Sfx.click();
@@ -632,13 +667,13 @@
       formBox.appendChild(b);
     });
     const meta = LESSONS.packMeta(pick.lang, pick.level, pick.form);
-    const stars = state.save.stars[meta.id] || 0;
-    const packBest = (state.save.bestById && state.save.bestById[meta.id]) || 0;
+    const stars = packStars(pick.lang, pick.level, pick.form);
+    const packBest = (state.save.bestById && state.save.bestById[LESSONS.packId(pick.lang, pick.level, pick.form, pick.advanced)]) || 0;
     const take = meta.form === "word" ? Math.min(20, meta.count) : meta.form === "sentence" ? Math.min(8, meta.count) : Math.min(4, meta.count);
     $("lesson-summary").innerHTML =
       `<h3>${meta.name}</h3>
        <p>じっくり　うって　ハイスコアを　ねらおう。タイムと　まちがいから　点がつくよ。<br>
-       ${take} もん　／　このコースのベスト <b>${fmtScore(packBest)}</b>　／　${"★".repeat(stars)}${"☆".repeat(3 - stars)} でつぎのレベル</p>`;
+       ${take} もん　／　${pick.advanced ? "上級（句読点あり）" : "ふつう"}　／　ベスト <b>${fmtScore(packBest)}</b>　／　${"★".repeat(stars)}${"☆".repeat(3 - stars)}</p>`;
   }
 
   function goFree() {
@@ -896,14 +931,14 @@
   $("res-retry").addEventListener("click", () => {
     const st = state.play && state.play.stage;
     if (!st) return;
-    if (st.kind === "lesson") startLessonPack(st.lang, st.level, st.form);
+    if (st.kind === "lesson") startLessonPack(st.lang, st.level, st.form, st.advanced);
     else startStage(st, state.play.free);
   });
   $("res-next").addEventListener("click", () => {
     const st = state.play && state.play.stage;
     const next = nextStageOf(st);
     if (st && st.kind === "lesson") {
-      if (next) startLessonPack(next.lang, next.level, next.form);
+      if (next) startLessonPack(next.lang, next.level, next.form, st.advanced);
       else goLessons();
       return;
     }

@@ -59,7 +59,7 @@
         W("きょうは はれです こうえんへ いきます ともだちと あそびます",
           "きょうは晴れです。公園へ行きます。友だちと遊びます。",
           "天気がいいので、外であそぶよ。"),
-        W("あさ おきて かおを あらいます ごはんを たべて がっこうへ いきます",
+        W("あさ おきて、かおを あらいます。ごはんを たべて がっこうへ いきます",
           "朝おきて、顔を洗います。ごはんを食べて、学校へ行きます。",
           "いちにちの はじまり。"),
         W("わたしの かぞくは よにんです おとうさんと おかあさんと いもうとが います",
@@ -117,7 +117,7 @@
         W("じてんしゃに のるときは ヘルメットを かぶります みぎひだりを よく みます",
           "自転車に乗るときはヘルメットをかぶります。右左をよく見ます。",
           "あんぜん第一。"),
-        W("なつの あさ はやく おきて ラジオたいそうを します からだを うごかします",
+        W("なつの あさ、はやく おきて ラジオたいそうを します。からだを うごかします",
           "夏の朝、早くおきてラジオ体操をします。体を動かします。",
           "なつやすみのあさ。"),
         W("としょかんは しずかです すきな ほんを さがします いえで ゆっくり よみます",
@@ -193,7 +193,7 @@
         W("きょうかしょ", "教科書", "textbook"), W("じしょ", "辞書", "dictionary"),
       ],
       sentence: [
-        W("はじめまして どうぞ よろしく おねがいします", "はじめまして。どうぞよろしくお願いします。", "Nice to meet you."),
+        W("はじめまして。どうぞ よろしく おねがいします", "はじめまして。どうぞよろしくお願いします。", "Nice to meet you."),
         W("わたしの しゅみは どくしょです", "私の趣味は読書です。", "My hobby is reading."),
         W("まいにち でんしゃで つうがくします", "毎日電車で通学します。", "I go to school by train."),
         W("ほうかごは ぶかつが あります", "放課後は部活があります。", "I have club after school."),
@@ -214,7 +214,7 @@
         W("あしたは こくごの てすとです きょうかしょを よんで じしょで ことばを おぼえます",
           "あしたは国語のテストです。教科書を読んで、辞書で言葉をおぼえます。",
           "テストべんきょう。"),
-        W("ほうかご ともだちと としょかんへ いきます しゅくだいを おわらせてから かえります",
+        W("ほうかご、ともだちと としょかんへ いきます。しゅくだいを おわらせてから かえります",
           "放課後、友だちと図書館へ行きます。宿題を終わらせてから帰ります。",
           "放課後のけいかく。"),
         W("しょうらいの ゆめは まだ はっきり しません いろいろな しごとに きょうみが あります",
@@ -246,7 +246,7 @@
         W("かんきょうに えいきょうが あります", "環境に影響があります。", "It affects the environment."),
         W("でんとうと ぎじゅつを くらべます", "伝統と技術を比べます。", "We compare tradition and tech."),
         W("けいけんから まなびました", "経験から学びました。", "I learned from experience."),
-        W("さんせいですか はんたいですか", "賛成ですか、反対ですか。", "Do you agree or disagree?"),
+        W("さんせいですか、はんたいですか", "賛成ですか、反対ですか。", "Do you agree or disagree?"),
         W("ほうこくの けっかを まとめます", "報告の結果をまとめます。", "I summarize the results."),
         W("ぶんかの ちがいは おもしろいです", "文化の違いはおもしろいです。", "Cultural differences are interesting."),
         W("かいけつさくを かんがえます", "解決策を考えます。", "I think of a solution."),
@@ -255,13 +255,13 @@
         W("わたしは プラスチックを へらすべきだと おもいます うみの いきものが こまっているからです",
           "私はプラスチックを減らすべきだと思います。海の生き物が困っているからです。",
           "意見と理由。"),
-        W("スマホは べんりですが つかいすぎは よくありません じかんを きめて つかいます",
+        W("スマホは べんりですが、つかいすぎは よくありません。じかんを きめて つかいます",
           "スマホは便利ですが、使いすぎはよくありません。時間を決めて使います。",
           "つかいかたをかんがえる。"),
         W("グループで とうろんを しました いけんは わかれましたが おたがいに はなしを ききました",
           "グループで討論をしました。意見は分かれましたが、お互いに話を聞きました。",
           "話し合いのたいせつさ。"),
-        W("りょこうの けいけんを はっぴょうします みたもの たべたもの かんじたことを はなします",
+        W("りょこうの けいけんを はっぴょうします。みたもの、たべたもの、かんじたことを はなします",
           "旅行の経験を発表します。見たもの、食べたもの、感じたことを話します。",
           "経験を伝える。"),
         W("もんだいの げんいんを しらべて かいけつさくを かんがえます チームで やくわりを きめます",
@@ -300,7 +300,7 @@
         W("こくさい りかいを ふかめたいです", "国際理解を深めたいです。", "I want deeper global understanding."),
       ],
       long: [
-        W("わたしは しょうらい いりょうの しごとに つきたいです ひとの やくに たちたいからです",
+        W("わたしは しょうらい、いりょうの しごとに つきたいです。ひとの やくに たちたいからです",
           "私は将来、医療の仕事に就きたいです。人の役に立ちたいからです。",
           "進路のおもい。"),
         W("ちいきの ぼうさいくんれんに さんかしました にげみちと しゅうごうばしょを おぼえました",
@@ -613,8 +613,47 @@
     },
   };
 
-  function packId(lang, level, form) {
-    return "lesson-" + lang + "-" + level + "-" + form;
+  function packId(lang, level, form, adv) {
+    return "lesson-" + lang + "-" + level + "-" + form + (adv ? "-adv" : "");
+  }
+
+  function jaAdvancedText(t, d) {
+    const src = String(t || "");
+    const disp = String(d || "");
+    const already = /[、。？！]/.test(src);
+    const tokens = src.replace(/[。、？！]/g, (m) => " " + m + " ").trim().split(/\s+/).filter(Boolean);
+    const letters = tokens.filter((x) => !/[、。？！]/.test(x));
+    if (already) {
+      let s = src.replace(/[\s　]+/g, "");
+      if (!/[。？！]$/.test(s) && /[。．.？?！!]$/.test(disp)) {
+        s += /[？?]$/.test(disp) ? "？" : /[！!]$/.test(disp) ? "！" : "。";
+      }
+      return s;
+    }
+    const stops = (disp.match(/[。]/g) || []).length;
+    const commas = (disp.match(/、/g) || []).length;
+    if (commas === 1 && letters.length === 2 && stops <= 1) {
+      return letters[0] + "、" + letters[1] + (/[？?]$/.test(disp) ? "？" : "。");
+    }
+    if (stops >= 2 && letters.length >= stops && letters.length % stops === 0) {
+      const per = letters.length / stops;
+      let s = "";
+      letters.forEach((w, i) => {
+        s += w;
+        if ((i + 1) % per === 0) s += "。";
+      });
+      return s;
+    }
+    let s = letters.join("");
+    if (/[？?]$/.test(disp) || /ですか$/.test(s)) s += "？";
+    else if (/[！!]$/.test(disp)) s += "！";
+    else s += "。";
+    return s;
+  }
+
+  function enAdvancedText(t, d) {
+    const src = String(d || t || "").toLowerCase();
+    return src.replace(/[\s　]+/g, "").replace(/[^a-z0-9.,!?']/g, "");
   }
 
   function getItems(lang, level, form) {
@@ -622,13 +661,21 @@
     return src && src[form] ? src[form].slice() : [];
   }
 
-  function toPlayItems(lang, list) {
-    return list.map((it) => ({
-      mode: lang === "en" ? "alpha" : "romaji",
-      text: it.t,
-      display: it.d || it.t,
-      meaning: it.m || "",
-    }));
+  function toPlayItems(lang, list, form, advanced) {
+    return list.map((it) => {
+      let text = it.t;
+      if (lang === "ja" && advanced && form && form !== "word") {
+        text = jaAdvancedText(it.t, it.d);
+      } else if (lang === "en" && form && form !== "word") {
+        text = advanced ? enAdvancedText(it.t, it.d) : String(it.t).replace(/[\s　.,!?']/g, "");
+      }
+      return {
+        mode: lang === "en" ? "alpha" : "romaji",
+        text: text,
+        display: it.d || it.t,
+        meaning: it.m || "",
+      };
+    });
   }
 
   function packMeta(lang, level, form) {
