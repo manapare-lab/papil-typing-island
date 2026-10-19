@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>パピルタクシー</title>
+  <meta name="description" content="おきゃくさんをのせて、こたえのばしょまで大いそぎ！クレイジーなドライブで学べる知育ゲーム。" />
+  <link rel="icon" href="../assets/char/cheer.png" />
+  <link rel="stylesheet" href="taxi.css" />
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div id="hud" hidden>
+    <div class="hud-top">
+      <div class="pill">のこり <b id="h-time">60</b>びょう</div>
+      <div class="pill">ちんぎん <b id="h-score">0</b>えん</div>
+      <div class="pill">コンボ <b id="h-combo">0</b></div>
+    </div>
+    <div id="banner"></div>
+    <div id="toast"></div>
+    <div id="pad">
+      <div class="pad-group">
+        <button data-key="left">◀</button>
+        <button data-key="right">▶</button>
+      </div>
+      <div class="pad-group">
+        <button data-key="down">ブレーキ</button>
+        <button data-key="up">アクセル</button>
+      </div>
+    </div>
+  </div>
+
+  <section id="menu" class="overlay on">
+    <div class="card">
+      <img src="../assets/char/cheer.png" alt="パピル" class="mascot" />
+      <h1>パピルタクシー</h1>
+      <p class="lead">おきゃくさんを　のせて、<br />こたえの　ばしょへ　大いそぎ！</p>
+      <div id="subjects"></div>
+      <p class="tiny">↑↓←→ または WASD でうんてん ／ スマホは下のボタン<br />ビルに ぶつかると おそくなるよ。まちがえると じかんが へるよ！</p>
+      <p class="tiny"><a href="../index.html">← タイピング島へ</a></p>
+    </div>
+  </section>
+
+  <section id="result" class="overlay">
+    <div class="card">
+      <img src="../assets/char/idle.png" alt="" class="mascot" id="r-img" />
+      <h1>おつかれさま！</h1>
+      <p class="lead"><span id="r-subject"></span></p>
+      <p class="big"><b id="r-score">0</b> えん</p>
+      <p id="r-detail" class="tiny"></p>
+      <p id="r-best" class="best"></p>
+      <div class="row">
+        <button class="btn" id="r-again">もういちど</button>
+        <button class="btn ghost" id="r-menu">教科をえらぶ</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
